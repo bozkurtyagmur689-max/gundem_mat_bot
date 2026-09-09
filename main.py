@@ -3,7 +3,7 @@ from flask import Flask, request
 import telebot
 from mastodon import Mastodon
 
-# Bilgilerinizi buraya tanımlıyoruz
+# Bilgileriniz
 TOKEN = os.environ.get('TELEGRAM_TOKEN', 'TELEGRAM_BOT_TOKENINIZI_BURAYA_YAZABILIRSINIZ')
 MASTODON_ACCESS_TOKEN = "fQYq5Pj5pwnOMT1Mcr2rwJRcJK_8H0vSY-5bFl9JRYs"
 MASTODON_API_BASE_URL = "https://mastodon.social"
@@ -27,21 +27,19 @@ def getMessage():
 @app.route("/")
 def webhook():
     bot.remove_webhook()
-    # Render'daki site adresinizi buraya yazın veya otomatik algılasın
-    bot.set_webhook(url='https://PROJE_ADINIZ.onrender.com/' + TOKEN)
+    # Render'daki gerçek adresin buraya eklendi
+    bot.set_webhook(url='https://x-telegram-bot-servis.onrender.com/' + TOKEN)
     return "Bot aktif ve Mastodon'a bağlı!", 200
 
 @bot.message_handler(commands=['tweet', 'post'])
 def send_to_mastodon(message):
-    # /tweet komutundan sonra yazılan metni alıyoruz
     text = message.text.replace('/tweet', '').replace('/post', '').strip()
     
     if not text:
-        bot.reply_to(message, "Lütfen gönderilcek metni yazın. Örn: /tweet Merhaba Dünya")
+        bot.reply_to(message, "Lütfen gönderilecek metni yazın. Örn: /tweet Merhaba Dünya")
         return
 
     try:
-        # Mastodon'a gönderiyi (toot) atıyoruz
         mastodon.status_post(text)
         bot.reply_to(message, "Başarıyla Mastodon'da paylaşıldı! 🚀")
     except Exception as e:
