@@ -13,7 +13,8 @@ TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
 X_CLIENT_ID = "Q1I1ZzlwaVcyQWREY1B5d2hHc1M6MTpjaQ"
 X_CLIENT_SECRET = "cq1qQqxu69Wa0apOUhgsLsVSlPQ84UT_dbl2rZIz7Zw5USDli4"
 REDIRECT_URI = "https://x-telegram-bot-servis.onrender.com/callback"
-SCOPES = "tweet.read tweet.write users.read offline.access"
+# Scopes sadeleştirildi
+SCOPES = "tweet.read tweet.write users.read"
 
 oauth_sessions = {}
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
@@ -31,7 +32,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def save_tokens(telegram_id, access_token, refresh_token):
+def save_tokens(telegram_id, access_token, refresh_token=""):
     conn = sqlite3.connect("bot_users.db")
     cursor = conn.cursor()
     cursor.execute('''
