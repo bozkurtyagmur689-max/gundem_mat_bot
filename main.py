@@ -8,9 +8,9 @@ from requests_oauthlib import OAuth2Session
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, filters
 # KONFIGURASYON BILGILERI
-TELEGRAM_BOT_TOKEN = "BOTFATHER_DAN_ALINAN_TOKEN"
-X_CLIENT_ID = "X_DEVELOPER_CLIENT_ID"
-X_CLIENT_SECRET = "X_DEVELOPER_CLIENT_SECRET"
+TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
+X_CLIENT_ID = "Q1I1ZzlwaVcyQWREYlB5d2hHc1M6MTpjaQ"
+X_CLIENT_SECRET = "LW_UJGP9GzdiFCDtjWwL8pC5l6bQAlNsG8g5M8xBZVLUML-Vg8"
 REDIRECT_URI = "https://x-telegram-bot-servis.onrender.com/callback"
 SCOPES = ["tweet.read", "tweet.write", "users.read", "offline.access"]
 AUTH_URL = "https://twitter.com/i/oauth2/authorize"
