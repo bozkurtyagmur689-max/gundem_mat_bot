@@ -6,10 +6,10 @@ from flask import Flask, request
 from requests_oauthlib import OAuth2Session
 import telebot
 
-# KONFIGURASYON BILGILERI
-TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3sCs3c"
-X_CLIENT_ID = "Q1I1ZzlwaVcyQWREY1B5d2hhc1M6MTpjaA"
-X_CLIENT_SECRET = "LW_UJGP9GzdiFCDtjWwL8pC516bQ1Q34Jk"
+# GUNCEL KONFIGURASYON BILGILERI
+TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
+X_CLIENT_ID = "Q1I1ZzlwaVcyQWREY1B5d2hHc1M6MTpjaQ"
+X_CLIENT_SECRET = "LW_UJGP9GzdiFCDtjWwL8pC516bQAlNsG8g5M8xBZVLUML-Vg8"
 REDIRECT_URI = "https://x-telegram-bot-servis.onrender.com/callback"
 SCOPES = ["tweet.read", "tweet.write", "users.read", "offline.access"]
 AUTH_URL = "https://twitter.com/i/oauth2/authorize"
@@ -85,7 +85,7 @@ def run_bot():
 
 if __name__ == "__main__":
     init_db()
-    # Botu ayrı bir thread'de dinlemeye al
+    # Telegram botunu ayrı bir thread'de dinlemeye al
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
     
