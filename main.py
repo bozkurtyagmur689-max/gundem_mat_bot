@@ -11,8 +11,8 @@ TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
 # X (TWITTER) OAUTH 1.0a ANAHTARLARI
 CONSUMER_KEY = "V3N5KZxWAcDVad4mxbQF0FTAk"
 CONSUMER_SECRET = "C6VXRz1PGJ9Lxt07R2XVBZV3SERCoeWWeLhQuwVVCs3JDpm25O"
-ACCESS_TOKEN = "2092914538412720128-SM27wPHZf4pk4NaM2jIUHMuZlyBxmq"
-ACCESS_TOKEN_SECRET = "7OtuiFYCOQZpUjWKJs8MNtwBtvvmNyR0etnPGR5i4JMuGo5mmw"
+ACCESS_TOKEN = "2092914538412720128-hFpI6kSnZOx69ZRtp9HkiUxFns3v4P"
+ACCESS_TOKEN_SECRET = "nVzasPCGW8JrX7wouCxbme3Tnt8pSs0Z7SvW75TqL6Eve"
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 app = Flask(__name__)
@@ -36,7 +36,7 @@ def post_tweet(message):
         bot.reply_to(message, "Lütfen paylaşmak istediğiniz metni yazın.\nÖrnek: `/tweet Merhaba Dünya!`")
         return
 
-    # Direct OAuth 1.0a Kimlik Doğrulaması (Yönlendirme gerektirmez)
+    # Direct OAuth 1.0a Kimlik Doğrulaması
     auth = OAuth1(
         CONSUMER_KEY,
         client_secret=CONSUMER_SECRET,
