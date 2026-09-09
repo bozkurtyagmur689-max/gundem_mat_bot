@@ -17,17 +17,17 @@ AUTH_URL = "https://twitter.com/i/oauth2/authorize"
 TOKEN_URL = "https://api.twitter.com/2/oauth2/token"
 oauth_states = {}
 def init_db():
-conn = sqlite3.connect("bot_users.db")
-cursor = conn.cursor()
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-telegram_id INTEGER PRIMARY KEY,
-access_token TEXT,
-refresh_token TEXT
-)
-''')
-conn.commit()
-conn.close()
+    conn = sqlite3.connect("bot_users.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        telegram_id INTEGER PRIMARY KEY,
+        access_token TEXT,
+        refresh_token TEXT
+    )
+    ''')
+    conn.commit()
+    conn.close()
 def save_tokens(telegram_id, access_token, refresh_token):
 conn = sqlite3.connect("bot_users.db")
 cursor = conn.cursor()
