@@ -41,6 +41,14 @@ def save_tokens(telegram_id, access_token, refresh_token):
     conn.commit()
     conn.close()
 
+def get_user_token(telegram_id):
+    conn = sqlite3.connect("bot_users.db")
+    cursor = conn.cursor()
+    cursor.execute('SELECT access_token FROM users WHERE telegram_id = ?', (telegram_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
+
 # FLASK WEB SUNUCUSU
 app = Flask(__name__)
 
@@ -65,7 +73,7 @@ def callback():
     save_tokens(telegram_id, token["access_token"], token.get("refresh_token", ""))
     return "Giris basarili! Telegram'a donup botu kullanabilirsiniz."
 
-# TELEGRAM BOT KOMUTU
+# TELEGRAM BOT KOMUTLARI
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
@@ -80,15 +88,35 @@ def send_welcome(message):
         f"Merhaba! X (Twitter) hesabınızı bağlamak için aşağıdaki bağlantıya tıklayın:\n\n{authorization_url}"
     )
 
+@bot.message_handler(commands=['tweet'])
+def post_tweet(message):
+    user_id = message.from_user.id
+    token = get_user_token(user_id)
+    
+    if not token:
+        bot.reply_to(message, "Lütfen önce /start komutunu kullanarak X hesabınızı bağlayın.")
+        return
+
+    tweet_text = message.text.replace("/tweet", "").strip()
+    if not tweet_text:
+        bot.reply_to(message, "Lütfen paylaşmak istediğiniz metni yazın.\nÖrnek: `/tweet Merhaba Dünya!`")
+        return
+
+    twitter = OAuth2Session(X_CLIENT_ID, token={"access_token": token, "token_type": "bearer"})
+    response = twitter.post("https://api.twitter.com/2/tweets", json={"text": tweet_text})
+    
+    if response.status_code == 201:
+        bot.reply_to(message, "Tweet başarıyla paylaşıldı! 🚀")
+    else:
+        bot.reply_to(message, f"Tweet paylaşılırken bir hata oluştu: {response.text}")
+
 def run_bot():
     bot.infinity_polling()
 
 if __name__ == "__main__":
     init_db()
-    # Telegram botunu ayrı bir thread'de dinlemeye al
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
     
-    # Flask sunucusunu başlat
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
