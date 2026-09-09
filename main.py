@@ -81,7 +81,7 @@ def send_welcome(message):
     )
 
 def run_bot():
-    bot.infinity_polling(skip_pending_updates=True)
+    bot.infinity_polling()
 
 if __name__ == "__main__":
     init_db()
