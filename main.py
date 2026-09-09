@@ -1,14 +1,10 @@
 import os
-import io
 import uuid
 import sqlite3
 import threading
-import asyncio
-import requests
 from flask import Flask, request
 from requests_oauthlib import OAuth2Session
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import telebot
 
 # KONFIGURASYON BILGILERI
 TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3sCs3c"
@@ -20,6 +16,7 @@ AUTH_URL = "https://twitter.com/i/oauth2/authorize"
 TOKEN_URL = "https://api.twitter.com/2/oauth2/token"
 
 oauth_states = {}
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
 def init_db():
     conn = sqlite3.connect("bot_users.db")
@@ -68,35 +65,30 @@ def callback():
     save_tokens(telegram_id, token["access_token"], token.get("refresh_token", ""))
     return "Giris basarili! Telegram'a donup botu kullanabilirsiniz."
 
-# TELEGRAM BOT KOMUTLARI
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+# TELEGRAM BOT KOMUTU
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    user_id = message.from_user.id
     state = str(uuid.uuid4())
     oauth_states[state] = user_id
     
     twitter = OAuth2Session(X_CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPES)
     authorization_url, _ = twitter.authorization_url(AUTH_URL, state=state)
     
-    await update.message.reply_text(
+    bot.reply_to(
+        message, 
         f"Merhaba! X (Twitter) hesabınızı bağlamak için aşağıdaki bağlantıya tıklayın:\n\n{authorization_url}"
     )
 
-def start_bot_loop():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start_command))
-    loop.run_until_complete(application.initialize())
-    loop.run_until_complete(application.start())
-    loop.run_until_complete(application.updater.start_polling(drop_pending_updates=True))
-    loop.run_forever()
+def run_bot():
+    bot.infinity_polling(skip_pending_updates=True)
 
 if __name__ == "__main__":
     init_db()
-    # Telegram botunu ayrı bir thread içinde yeni event loop ile başlat
-    t = threading.Thread(target=start_bot_loop, daemon=True)
+    # Botu ayrı bir thread'de dinlemeye al
+    t = threading.Thread(target=run_bot, daemon=True)
     t.start()
     
-    # Flask sunucusunu ana thread'de çalıştır
+    # Flask sunucusunu başlat
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
