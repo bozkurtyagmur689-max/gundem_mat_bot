@@ -1,5 +1,6 @@
 import os
 import io
+import uuid
 import sqlite3
 import threading
 import requests
@@ -50,6 +51,7 @@ def get_tokens(telegram_id):
     conn.close()
     return row if row else (None, None)
 
+# FLASK WEB SUNUCUSU
 app = Flask(__name__)
 
 @app.route("/")
@@ -71,9 +73,32 @@ def callback():
         include_client_id=True
     )
     save_tokens(telegram_id, token["access_token"], token.get("refresh_token", ""))
-    return "Giris basarili!"
+    return "Giris basarili! Telegram'a donup botu kullanabilirsiniz."
+
+# TELEGRAM BOT KOMUTLARI
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    state = str(uuid.uuid4())
+    oauth_states[state] = user_id
+    
+    twitter = OAuth2Session(X_CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPES)
+    authorization_url, _ = twitter.authorization_url(AUTH_URL, state=state)
+    
+    await update.message.reply_text(
+        f"Merhaba! X (Twitter) hesabınızı bağlamak için aşağıdaki bağlantıya tıklayın:\n\n{authorization_url}"
+    )
+
+def run_telegram_bot():
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start_command))
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     init_db()
+    # Telegram botunu arka planda çalıştır
+    bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
+    bot_thread.start()
+    
+    # Flask web sunucusunu ana döngüde çalıştır
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
