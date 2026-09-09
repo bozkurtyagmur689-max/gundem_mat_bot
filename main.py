@@ -1,160 +1,61 @@
 import os
-import uuid
-import sqlite3
 import threading
-import hashlib
-import base64
 import requests
-from flask import Flask, request
+from requests_oauthlib import OAuth1
+from flask import Flask
 import telebot
 
-# GUNCEL KONFIGURASYON BILGILERI
+# --- SABIT BILGILER ---
 TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
-X_CLIENT_ID = "Q1I1ZzlwaVcyQWREY1B5d2hHc1M6MTpjaQ"
-X_CLIENT_SECRET = "cq1qQqxu69Wa0apOUhgsLsVSlPQ84UT_dbl2rZIz7Zw5USDli4"
-REDIRECT_URI = "https://x-telegram-bot-servis.onrender.com/callback"
-# Scopes sadeleştirildi
-SCOPES = "tweet.read tweet.write users.read"
 
-oauth_sessions = {}
+# X (TWITTER) OAUTH 1.0a ANAHTARLARI
+CONSUMER_KEY = "V3N5KZxWAcDVad4mxbQF0FTAk"
+CONSUMER_SECRET = "C6VXRz1PGJ9Lxt07R2XVBZV3SERCoeWWeLhQuwVVCs3JDpm25O"
+ACCESS_TOKEN = "2092914538412720128-SM27wPHZf4pk4NaM2jIUHMuZlyBxmq"
+ACCESS_TOKEN_SECRET = "7OtuiFYCOQZpUjWKJs8MNtwBtvvmNyR0etnPGR5i4JMuGo5mmw"
+
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-
-def init_db():
-    conn = sqlite3.connect("bot_users.db")
-    cursor = conn.cursor()
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        telegram_id INTEGER PRIMARY KEY,
-        access_token TEXT,
-        refresh_token TEXT
-    )
-    ''')
-    conn.commit()
-    conn.close()
-
-def save_tokens(telegram_id, access_token, refresh_token=""):
-    conn = sqlite3.connect("bot_users.db")
-    cursor = conn.cursor()
-    cursor.execute('''
-    INSERT OR REPLACE INTO users (telegram_id, access_token, refresh_token)
-    VALUES (?, ?, ?)
-    ''', (telegram_id, access_token, refresh_token))
-    conn.commit()
-    conn.close()
-
-def get_user_token(telegram_id):
-    conn = sqlite3.connect("bot_users.db")
-    cursor = conn.cursor()
-    cursor.execute('SELECT access_token FROM users WHERE telegram_id = ?', (telegram_id,))
-    row = cursor.fetchone()
-    conn.close()
-    return row[0] if row else None
-
-# FLASK WEB SUNUCUSU
 app = Flask(__name__)
 
 @app.route("/")
 def home():
     return "Bot Sunucusu Aktif ve Calisiyor!"
 
-@app.route("/callback")
-def callback():
-    state = request.args.get("state")
-    code = request.args.get("code")
-    
-    if state not in oauth_sessions:
-        return "Gecersiz veya suresi dolmus oturum istegi."
-        
-    session_data = oauth_sessions.pop(state)
-    telegram_id = session_data["telegram_id"]
-    code_verifier = session_data["code_verifier"]
-
-    token_url = "https://api.twitter.com/2/oauth2/token"
-    data = {
-        "code": code,
-        "grant_type": "authorization_code",
-        "client_id": X_CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
-        "code_verifier": code_verifier
-    }
-    
-    response = requests.post(
-        token_url,
-        data=data,
-        auth=(X_CLIENT_ID, X_CLIENT_SECRET)
-    )
-    
-    if response.status_code == 200:
-        token_json = response.json()
-        save_tokens(telegram_id, token_json["access_token"], token_json.get("refresh_token", ""))
-        return "<h1>Giris Basarili!</h1><p>Telegram'a donup botu kullanmaya baslayabilirsiniz.</p>"
-    else:
-        return f"Token alma hatasi: {response.text}"
-
-# TELEGRAM BOT KOMUTLARI
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    user_id = message.from_user.id
-    state = str(uuid.uuid4())
-    
-    raw_bytes = os.urandom(32)
-    code_verifier = base64.urlsafe_b64encode(raw_bytes).decode('utf-8').rstrip('=')
-    
-    hashed = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    code_challenge = base64.urlsafe_b64encode(hashed).decode('utf-8').rstrip('=')
-
-    oauth_sessions[state] = {
-        "telegram_id": user_id,
-        "code_verifier": code_verifier
-    }
-    
-    auth_url = (
-        f"https://twitter.com/i/oauth2/authorize?"
-        f"response_type=code&client_id={X_CLIENT_ID}&redirect_uri={REDIRECT_URI}"
-        f"&scope={SCOPES.replace(' ', '%20')}&state={state}"
-        f"&code_challenge={code_challenge}&code_challenge_method=S256"
-    )
-    
     bot.reply_to(
         message, 
-        f"Merhaba! X (Twitter) hesabınızı bağlamak için aşağıdaki bağlantıya tıklayın:\n\n{auth_url}"
+        "Merhaba! Botunuz hazır ve X hesabınıza bağlı.\n"
+        "Tweet atmak için: `/tweet Mesajınız` yazabilirsiniz."
     )
 
 @bot.message_handler(commands=['tweet'])
 def post_tweet(message):
-    user_id = message.from_user.id
-    token = get_user_token(user_id)
-    
-    if not token:
-        bot.reply_to(message, "Lütfen önce /start komutunu kullanarak X hesabınızı bağlayın.")
-        return
-
     tweet_text = message.text.replace("/tweet", "").strip()
     if not tweet_text:
         bot.reply_to(message, "Lütfen paylaşmak istediğiniz metni yazın.\nÖrnek: `/tweet Merhaba Dünya!`")
         return
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-    
-    response = requests.post(
-        "https://api.twitter.com/2/tweets",
-        headers=headers,
-        json={"text": tweet_text}
+    # Direct OAuth 1.0a Kimlik Doğrulaması (Yönlendirme gerektirmez)
+    auth = OAuth1(
+        CONSUMER_KEY,
+        client_secret=CONSUMER_SECRET,
+        resource_owner_key=ACCESS_TOKEN,
+        resource_owner_secret=ACCESS_TOKEN_SECRET
     )
+    
+    url = "https://api.twitter.com/2/tweets"
+    response = requests.post(url, auth=auth, json={"text": tweet_text})
     
     if response.status_code == 201:
         bot.reply_to(message, "Tweet başarıyla paylaşıldı! 🚀")
     else:
-        bot.reply_to(message, f"Tweet paylaşılırken hata oluştu: {response.text}")
+        bot.reply_to(message, f"Tweet atılırken hata oluştu: {response.text}")
 
 def run_bot():
     bot.infinity_polling()
 
 if __name__ == "__main__":
-    init_db()
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
     
