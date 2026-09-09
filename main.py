@@ -72,3 +72,7 @@ def callback():
     )
     save_tokens(telegram_id, token["access_token"], token.get("refresh_token", ""))
     return "Giris basarili!"
+    if __name__ == "__main__":
+    init_db()
+    app.run(host="0.0.0.0", port=5000)
+    
