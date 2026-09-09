@@ -11,7 +11,7 @@ import telebot
 # GUNCEL KONFIGURASYON BILGILERI
 TELEGRAM_BOT_TOKEN = "8789026893:AAHbPlzbRbUMJoDuGcmUG3DdxwsjpC3cS3c"
 X_CLIENT_ID = "Q1I1ZzlwaVcyQWREY1B5d2hHc1M6MTpjaQ"
-X_CLIENT_SECRET = "LW_UJGP9GzdiFCDtjWwL8pC516bQAlNsG8g5M8xBZVLUML-Vg8"
+X_CLIENT_SECRET = "cq1qQqxu69Wa0apOUhgsLsVSlPQ84UT_dbl2rZIz7Zw5USDli4"
 REDIRECT_URI = "https://x-telegram-bot-servis.onrender.com/callback"
 SCOPES = "tweet.read tweet.write users.read offline.access"
 
@@ -77,7 +77,6 @@ def callback():
         "code_verifier": code_verifier
     }
     
-    # Public client için hem Basic Auth hem body client_id destekli istek
     response = requests.post(
         token_url,
         data=data,
@@ -97,7 +96,6 @@ def send_welcome(message):
     user_id = message.from_user.id
     state = str(uuid.uuid4())
     
-    # PKCE Kodları Üretme (Base64URL NOPAD)
     raw_bytes = os.urandom(32)
     code_verifier = base64.urlsafe_b64encode(raw_bytes).decode('utf-8').rstrip('=')
     
