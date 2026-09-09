@@ -5,7 +5,7 @@ import threading
 import hashlib
 import base64
 import requests
-from flask import Flask, request, redirect
+from flask import Flask, request
 import telebot
 
 # GUNCEL KONFIGURASYON BILGILERI
@@ -68,7 +68,6 @@ def callback():
     telegram_id = session_data["telegram_id"]
     code_verifier = session_data["code_verifier"]
 
-    # Token Takası (PKCE ile)
     token_url = "https://api.twitter.com/2/oauth2/token"
     data = {
         "code": code,
@@ -78,6 +77,7 @@ def callback():
         "code_verifier": code_verifier
     }
     
+    # Public client için hem Basic Auth hem body client_id destekli istek
     response = requests.post(
         token_url,
         data=data,
@@ -97,9 +97,12 @@ def send_welcome(message):
     user_id = message.from_user.id
     state = str(uuid.uuid4())
     
-    # PKCE Kodları Üretme
-    code_verifier = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').replace('=', '')
-    code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode('utf-8')).digest()).decode('utf-8').replace('=', '')
+    # PKCE Kodları Üretme (Base64URL NOPAD)
+    raw_bytes = os.urandom(32)
+    code_verifier = base64.urlsafe_b64encode(raw_bytes).decode('utf-8').rstrip('=')
+    
+    hashed = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(hashed).decode('utf-8').rstrip('=')
 
     oauth_sessions[state] = {
         "telegram_id": user_id,
